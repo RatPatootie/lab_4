@@ -1,0 +1,39 @@
+
+services:
+  courses-service:
+    build:
+      context: ./courses-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:80"
+    volumes:
+      - ./courses-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+  teachers-service:
+    build:
+      context: ./teachers-service
+      dockerfile: Dockerfile
+    ports:
+      - "8002:80"
+    volumes:
+      - ./teachers-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+
+  students-service:
+    build:
+      context: ./students-service
+      dockerfile: Dockerfile
+    ports:
+      - "8003:80"
+    volumes:
+     - ./students-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+
+
+
+  registrations-service:
+    build:
+      context: ./registrations-service
+      dockerfile: Dockerfile
+    ports:
+      - "8004:80"
+    volumes:
+     - ./registrations-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+
