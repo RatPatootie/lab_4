@@ -2,38 +2,132 @@
 services:
   courses-service:
     build:
-      context: ./courses-service
+      context: ./courses
       dockerfile: Dockerfile
     ports:
       - "8001:80"
     volumes:
-      - ./courses-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+      - ./courses:/var/www/html
+    depends_on:
+      - db-courses
+    environment:
+      - DB_HOST=db-courses
+      - DB_PORT=3306
+      - DB_DATABASE=courses
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
+
   teachers-service:
     build:
-      context: ./teachers-service
+      context: ./teachers
       dockerfile: Dockerfile
     ports:
       - "8002:80"
     volumes:
-      - ./teachers-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+      - ./teachers:/var/www/html:cached
+    depends_on:
+      - db-teachers
+    environment:
+      - DB_HOST=db-teachers
+      - DB_PORT=3306
+      - DB_DATABASE=teachers
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
 
   students-service:
     build:
-      context: ./students-service
+      context: ./students
       dockerfile: Dockerfile
     ports:
       - "8003:80"
     volumes:
-     - ./students-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
-
-
+      - ./students:/var/www/html
+    depends_on:
+      - db-students
+    environment:
+      - DB_HOST=db-students
+      - DB_PORT=3306
+      - DB_DATABASE=students
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
 
   registrations-service:
     build:
-      context: ./registrations-service
+      context: ./registrations
       dockerfile: Dockerfile
     ports:
       - "8004:80"
     volumes:
-     - ./registrations-service/apache-config.conf:/etc/apache2/sites-available/000-default.conf
+      - ./registrations:/var/www/html
+    depends_on:
+      - db-registrations
+    environment:
+      - DB_HOST=db-registrations
+      - DB_PORT=3306
+      - DB_DATABASE=registrations
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
 
+  grades-service:
+    build:
+      context: ./grades
+      dockerfile: Dockerfile
+    ports:
+      - "8005:80"
+    volumes:
+      - ./grades:/var/www/html
+    depends_on:
+      - db-grades
+    environment:
+      - DB_HOST=db-grades
+      - DB_PORT=3306
+      - DB_DATABASE=grades
+      - DB_USERNAME=root
+      - DB_PASSWORD=password
+
+  db-courses:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: courses
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-courses-data:/var/lib/mysql
+
+  db-teachers:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: teachers
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-teachers-data:/var/lib/mysql
+
+  db-students:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: students
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-students-data:/var/lib/mysql
+
+  db-registrations:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: registrations
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-registrations-data:/var/lib/mysql
+
+  db-grades:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: grades
+      MYSQL_ROOT_PASSWORD: password
+    volumes:
+      - db-grades-data:/var/lib/mysql
+
+volumes:
+  db-courses-data:
+  db-teachers-data:
+  db-students-data:
+  db-registrations-data:
+  db-grades-data:
