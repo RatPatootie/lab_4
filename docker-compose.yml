@@ -8,6 +8,8 @@ services:
       - "8001:80"
     volumes:
       - ./courses:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
     depends_on:
       - db-courses
     environment:
@@ -25,6 +27,8 @@ services:
       - "8002:80"
     volumes:
       - ./teachers:/var/www/html:cached
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
     depends_on:
       - db-teachers
     environment:
@@ -42,6 +46,8 @@ services:
       - "8003:80"
     volumes:
       - ./students:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
     depends_on:
       - db-students
     environment:
@@ -59,6 +65,8 @@ services:
       - "8004:80"
     volumes:
       - ./registrations:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
     depends_on:
       - db-registrations
     environment:
@@ -76,6 +84,8 @@ services:
       - "8005:80"
     volumes:
       - ./grades:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
     depends_on:
       - db-grades
     environment:
