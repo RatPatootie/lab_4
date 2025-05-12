@@ -6,24 +6,37 @@ use App\Models\Grade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 
 class GradeController extends Controller
 {
     public function index()
     {
-        $grades = Grade::all();
+        // Cache all grades for 60 minutes
+        $grades = Cache::remember('all_grades', 60 * 60, function () {
+            return Grade::all();
+        });
+        
         return response()->json($grades);
     }
 
     public function getByStudent($studentId)
     {
-        $grades = Grade::where('student_id', $studentId)->get();
+        // Cache grades by student for 30 minutes
+        $grades = Cache::remember('student_grades_' . $studentId, 30 * 60, function () use ($studentId) {
+            return Grade::where('student_id', $studentId)->get();
+        });
+        
         return response()->json($grades);
     }
 
     public function getByCourse($courseId)
     {
-        $grades = Grade::where('course_id', $courseId)->get();
+        // Cache grades by course for 30 minutes
+        $grades = Cache::remember('course_grades_' . $courseId, 30 * 60, function () use ($courseId) {
+            return Grade::where('course_id', $courseId)->get();
+        });
+        
         return response()->json($grades);
     }
 
@@ -112,6 +125,11 @@ class GradeController extends Controller
             'graded_date' => now(),
         ]);
 
+        // Clear relevant caches
+        Cache::forget('all_grades');
+        Cache::forget('student_grades_' . $request->student_id);
+        Cache::forget('course_grades_' . $request->course_id);
+
         return response()->json($grade, 201);
     }
 
@@ -153,6 +171,11 @@ class GradeController extends Controller
         $grade->updated_date = now();
         $grade->save();
 
+        // Clear relevant caches
+        Cache::forget('all_grades');
+        Cache::forget('student_grades_' . $grade->student_id);
+        Cache::forget('course_grades_' . $grade->course_id);
+
         return response()->json($grade);
     }
 
@@ -166,7 +189,17 @@ class GradeController extends Controller
             ], 404);
         }
         
+        // Store values before deletion for cache clearing
+        $studentId = $grade->student_id;
+        $courseId = $grade->course_id;
+        
         $grade->delete();
+        
+        // Clear relevant caches
+        Cache::forget('all_grades');
+        Cache::forget('student_grades_' . $studentId);
+        Cache::forget('course_grades_' . $courseId);
+        
         return response()->json([
             'message' => 'Grade deleted successfully'
         ]);

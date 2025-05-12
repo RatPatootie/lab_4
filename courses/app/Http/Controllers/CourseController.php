@@ -5,18 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class CourseController extends Controller
 {
     public function index()
     {
-        $courses = Course::all();
+        // Cache all courses for 60 minutes
+        $courses = Cache::remember('all_courses', 60 * 60, function () {
+            return Course::all();
+        });
+        
         return response()->json($courses);
     }
 
     public function show($id)
     {
-        $course = Course::find($id);
+        // Cache individual course for 30 minutes
+        $course = Cache::remember('course_' . $id, 30 * 60, function () use ($id) {
+            return Course::find($id);
+        });
         
         if (!$course) {
             return response()->json([
@@ -42,6 +50,10 @@ class CourseController extends Controller
         }
 
         $course = Course::create($request->all());
+        
+        // Clear cache after creating new course
+        Cache::forget('all_courses');
+        
         return response()->json($course, 201);
     }
 
@@ -68,6 +80,11 @@ class CourseController extends Controller
         }
 
         $course->update($request->all());
+        
+        // Clear cache after updating course
+        Cache::forget('all_courses');
+        Cache::forget('course_' . $id);
+        
         return response()->json($course);
     }
 
@@ -82,6 +99,11 @@ class CourseController extends Controller
         }
         
         $course->delete();
+        
+        // Clear cache after deleting course
+        Cache::forget('all_courses');
+        Cache::forget('course_' . $id);
+        
         return response()->json([
             'message' => 'Course deleted successfully'
         ]);

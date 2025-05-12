@@ -5,18 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Teacher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class TeacherController extends Controller
 {
     public function index()
     {
-        $teachers = Teacher::all();
+        // Cache all teachers for 60 minutes
+        $teachers = Cache::remember('all_teachers', 60 * 60, function () {
+            return Teacher::all();
+        });
+        
         return response()->json($teachers);
     }
 
     public function show($id)
     {
-        $teacher = Teacher::find($id);
+        // Cache individual teacher for 30 minutes
+        $teacher = Cache::remember('teacher_' . $id, 30 * 60, function () use ($id) {
+            return Teacher::find($id);
+        });
         
         if (!$teacher) {
             return response()->json([
@@ -42,6 +50,10 @@ class TeacherController extends Controller
         }
 
         $teacher = Teacher::create($request->all());
+        
+        // Clear cache after creating new teacher
+        Cache::forget('all_teachers');
+        
         return response()->json($teacher, 201);
     }
 
@@ -68,6 +80,11 @@ class TeacherController extends Controller
         }
 
         $teacher->update($request->all());
+        
+        // Clear cache after updating teacher
+        Cache::forget('all_teachers');
+        Cache::forget('teacher_' . $id);
+        
         return response()->json($teacher);
     }
 
@@ -82,6 +99,11 @@ class TeacherController extends Controller
         }
         
         $teacher->delete();
+        
+        // Clear cache after deleting teacher
+        Cache::forget('all_teachers');
+        Cache::forget('teacher_' . $id);
+        
         return response()->json([
             'message' => 'Teacher deleted successfully'
         ]);
