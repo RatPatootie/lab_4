@@ -5,18 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Cache;
 
 class StudentController extends Controller
 {
     public function index()
     {
-        $students = Student::all();
+        // Cache all students for 60 minutes
+        $students = Cache::remember('all_students', 60 * 60, function () {
+            return Student::all();
+        });
+        
         return response()->json($students);
     }
 
     public function show($id)
     {
-        $student = Student::find($id);
+        // Cache individual student for 30 minutes
+        $student = Cache::remember('student_' . $id, 30 * 60, function () use ($id) {
+            return Student::find($id);
+        });
         
         if (!$student) {
             return response()->json([
@@ -42,13 +50,15 @@ class StudentController extends Controller
         }
 
         $student = Student::create($request->all());
+        
+        // Clear the all_students cache when a new student is created
+        Cache::forget('all_students');
+        
         return response()->json($student, 201);
     }
 
     public function update(Request $request, $id)
     {   
-        
-
         $student = Student::find($id);
         
         if (!$student) {
@@ -70,6 +80,11 @@ class StudentController extends Controller
         }
 
         $student->update($request->all());
+        
+        // Clear caches for this student and all students list
+        Cache::forget('student_' . $id);
+        Cache::forget('all_students');
+        
         return response()->json($student);
     }
 
@@ -84,6 +99,11 @@ class StudentController extends Controller
         }
         
         $student->delete();
+        
+        // Clear caches for this student and all students list
+        Cache::forget('student_' . $id);
+        Cache::forget('all_students');
+        
         return response()->json([
             'message' => 'Student deleted successfully'
         ]);

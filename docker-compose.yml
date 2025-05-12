@@ -21,6 +21,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
+    user: root  # Важливо для правильних прав доступу
 
   teachers-service:
     build:
@@ -44,6 +45,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
+    user: root
 
   students-service:
     build:
@@ -67,6 +69,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
+    user: root
 
   registrations-service:
     build:
@@ -90,6 +93,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
+    user: root
 
   grades-service:
     build:
@@ -113,6 +117,7 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - CACHE_DRIVER=redis
+    user: root
 
   # Redis caching service
   redis:
