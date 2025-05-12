@@ -1,0 +1,5 @@
+docker-compose exec courses-service php artisan migrate:fresh --seed
+docker-compose exec teachers-service php artisan migrate:fresh --seed
+docker-compose exec students-service php artisan migrate:fresh --seed
+docker-compose exec registrations-service php artisan migrate:fresh --seed
+docker-compose exec grades-service php artisan migrate:fresh --seed
