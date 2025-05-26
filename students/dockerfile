@@ -1,41 +1,38 @@
-FROM php:8.2-apache
+FROM php:8.3-cli
 
-# Install dependencies
+# Встановлюємо системні залежності
 RUN apt-get update && apt-get install -y \
-    git \
-    curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    zip \
-    unzip
+    git zip unzip curl libzip-dev libonig-dev libbrotli-dev libxml2-dev procps \
+    && docker-php-ext-install pdo_mysql zip pcntl
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Встановлюємо Swoole (через PECL)
+RUN pecl install swoole && docker-php-ext-enable swoole
 
-# Get latest Composer
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+# Встановлюємо Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Робоча директорія
+WORKDIR /app
 
-# Configure Apache для Laravel
-RUN sed -i 's!/var/www/html!/var/www/html/public!g' /etc/apache2/sites-available/000-default.conf
+# Копіюємо код
+COPY . .
 
-# Set working directory
-WORKDIR /var/www/html
+# Копіюємо .env.example як .env
+RUN cp .env.example .env
+# Встановлюємо залежності
+RUN composer install --no-dev --optimize-autoloader
 
-# Copy code
-COPY . /var/www/html
-
-# Install dependencies
-RUN composer install --no-interaction
-
-# Generate application key
+# Генеруємо APP_KEY
 RUN php artisan key:generate
 
-# Set permissions
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+# Кешуємо конфіги Laravel
+RUN php artisan config:cache \
+ && php artisan route:cache \
+ && php artisan view:cache
+
+# Відкриваємо порт Octane
+EXPOSE 8000
+
+# Запускаємо Laravel Octane через Swoole
+CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000"]
