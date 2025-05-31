@@ -18,7 +18,7 @@ spec:
           image: lab_6-teachers-service   # заміни на свій образ
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8000
+            - containerPort: 80
           env:
             - name: DB_HOST
               value: db-teachers
@@ -42,8 +42,8 @@ spec:
     app: teachers
   ports:
     - protocol: TCP
-      port: 8000
-      targetPort: 8000
+      port: 80
+      targetPort: 80
   type: ClusterIP
 
 ---

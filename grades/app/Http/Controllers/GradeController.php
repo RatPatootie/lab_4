@@ -6,24 +6,37 @@ use App\Models\Grade;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 
 class GradeController extends Controller
 {
     public function index()
     {
-        $grades = Grade::all();
+        // Cache all grades for 60 minutes
+        $grades = Cache::remember('all_grades', 60 * 60, function () {
+            return Grade::all();
+        });
+        
         return response()->json($grades);
     }
 
     public function getByStudent($studentId)
     {
-        $grades = Grade::where('student_id', $studentId)->get();
+        // Cache grades by student for 30 minutes
+        $grades = Cache::remember('student_grades_' . $studentId, 30 * 60, function () use ($studentId) {
+            return Grade::where('student_id', $studentId)->get();
+        });
+        
         return response()->json($grades);
     }
 
     public function getByCourse($courseId)
     {
-        $grades = Grade::where('course_id', $courseId)->get();
+        // Cache grades by course for 30 minutes
+        $grades = Cache::remember('course_grades_' . $courseId, 30 * 60, function () use ($courseId) {
+            return Grade::where('course_id', $courseId)->get();
+        });
+        
         return response()->json($grades);
     }
 
@@ -43,7 +56,7 @@ class GradeController extends Controller
         }
 
         // Check if student exists
-        $studentResponse = Http::get('http://localhost:8003/api/students/' . $request->student_id);
+        $studentResponse = Http::get('http://students-service/api/students/' . $request->student_id);
         if ($studentResponse->status() === 404) {
             return response()->json([
                 'error' => 'Student not found'
@@ -51,7 +64,7 @@ class GradeController extends Controller
         }
 
         // Check if course exists and get teacher info
-        $courseResponse = Http::get('http://localhost:8001/api/courses/' . $request->course_id);
+        $courseResponse = Http::get('http://courses-service/api/courses/' . $request->course_id);
         if ($courseResponse->status() === 404) {
             return response()->json([
                 'error' => 'Course not found'
@@ -59,7 +72,7 @@ class GradeController extends Controller
         }
 
         // Check if teacher exists
-        $teacherResponse = Http::get('http://localhost:8002/api/teachers/' . $request->teacher_id);
+        $teacherResponse = Http::get('http://teachers-service/api/teachers/' . $request->teacher_id);
         if ($teacherResponse->status() === 404) {
             return response()->json([
                 'error' => 'Teacher not found'
@@ -75,7 +88,7 @@ class GradeController extends Controller
         }
 
         // Check if student is registered for the course
-        $registrationResponse = Http::get('http://localhost:8004/api/registrations/student/' . $request->student_id);
+        $registrationResponse = Http::get('http://registrations-service/api/registrations/student/' . $request->student_id);
         $registrations = $registrationResponse->json();
         
         $isRegistered = false;
@@ -112,6 +125,11 @@ class GradeController extends Controller
             'graded_date' => now(),
         ]);
 
+        // Clear relevant caches
+        Cache::forget('all_grades');
+        Cache::forget('student_grades_' . $request->student_id);
+        Cache::forget('course_grades_' . $request->course_id);
+
         return response()->json($grade, 201);
     }
 
@@ -138,7 +156,7 @@ class GradeController extends Controller
 
         // If teacher_id is being updated, check if teacher is assigned to the course
         if ($request->has('teacher_id') && $request->teacher_id != $grade->teacher_id) {
-            $courseResponse = Http::get('http://localhost:8001/api/courses/' . $grade->course_id);
+            $courseResponse = Http::get('http://courses-service/api/courses/' . $grade->course_id);
             $courseData = $courseResponse->json();
             
             if ($courseData['teacher_id'] != $request->teacher_id) {
@@ -153,6 +171,11 @@ class GradeController extends Controller
         $grade->updated_date = now();
         $grade->save();
 
+        // Clear relevant caches
+        Cache::forget('all_grades');
+        Cache::forget('student_grades_' . $grade->student_id);
+        Cache::forget('course_grades_' . $grade->course_id);
+
         return response()->json($grade);
     }
 
@@ -166,7 +189,17 @@ class GradeController extends Controller
             ], 404);
         }
         
+        // Store values before deletion for cache clearing
+        $studentId = $grade->student_id;
+        $courseId = $grade->course_id;
+        
         $grade->delete();
+        
+        // Clear relevant caches
+        Cache::forget('all_grades');
+        Cache::forget('student_grades_' . $studentId);
+        Cache::forget('course_grades_' . $courseId);
+        
         return response()->json([
             'message' => 'Grade deleted successfully'
         ]);

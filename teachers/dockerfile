@@ -5,7 +5,9 @@ RUN apt-get update && apt-get install -y \
     git zip unzip curl libzip-dev libonig-dev libbrotli-dev libxml2-dev procps \
     && docker-php-ext-install pdo_mysql zip pcntl
 
-
+# Встановлюємо розширення redis
+RUN pecl install redis \
+    && docker-php-ext-enable redis    
 # Встановлюємо Swoole (через PECL)
 RUN pecl install swoole && docker-php-ext-enable swoole
 
@@ -32,7 +34,7 @@ RUN php artisan config:cache \
  && php artisan view:cache
 
 # Відкриваємо порт Octane
-EXPOSE 8000
+EXPOSE 80
 
 # Запускаємо Laravel Octane через Swoole
-CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=8000"]
+CMD ["php", "artisan", "octane:start", "--server=swoole", "--host=0.0.0.0", "--port=80"]

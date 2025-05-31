@@ -18,7 +18,7 @@ spec:
           image: lab_6-courses-service
           imagePullPolicy: IfNotPresent
           ports:
-            - containerPort: 8000
+            - containerPort: 80
           env:
             - name: DB_HOST
               value: db-courses
@@ -42,8 +42,8 @@ spec:
     app: courses
   ports:
     - protocol: TCP
-      port: 8000
-      targetPort: 8000
+      port: 80
+      targetPort: 80
   type: ClusterIP
 
 ---

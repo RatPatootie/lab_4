@@ -2,45 +2,46 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: laravel-ingress
+  # зверни увагу: анотація rewrite-target більше не потрібна
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /$2
+    # nginx.ingress.kubernetes.io/rewrite-target: /$2   # видалили
 spec:
   rules:
     - host: localhost
       http:
         paths:
-          - path: /courses(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /api/courses
+            pathType: Prefix
             backend:
               service:
                 name: courses-service
                 port:
-                  number: 8000
-          - path: /teachers(/|$)(.*)
-            pathType: ImplementationSpecific
+                  number: 80
+          - path: /api/teachers
+            pathType: Prefix
             backend:
               service:
                 name: teachers-service
                 port:
-                  number: 8000
-          - path: /students(/|$)(.*)
-            pathType: ImplementationSpecific
+                  number: 80
+          - path: /api/students
+            pathType: Prefix
             backend:
               service:
                 name: students-service
                 port:
-                  number: 8000
-          - path: /registrations(/|$)(.*)
-            pathType: ImplementationSpecific
+                  number: 80
+          - path: /api/registrations
+            pathType: Prefix
             backend:
               service:
                 name: registrations-service
                 port:
-                  number: 8000
-          - path: /grades(/|$)(.*)
-            pathType: ImplementationSpecific
+                  number: 80
+          - path: /api/grades
+            pathType: Prefix
             backend:
               service:
                 name: grades-service
                 port:
-                  number: 8000
+                  number: 80

@@ -5,7 +5,7 @@ services:
       context: ./courses
       dockerfile: Dockerfile
     ports:
-      - "8001:8000"
+      - "8001:80"
     depends_on:
       - db-courses
     environment:
@@ -14,13 +14,17 @@ services:
       - DB_DATABASE=courses
       - DB_USERNAME=root
       - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+    user: root  # Важливо для правильних прав доступу
 
   teachers-service:
     build:
       context: ./teachers
       dockerfile: Dockerfile
     ports:
-      - "8002:8000"
+      - "8002:80"
     depends_on:
       - db-teachers
     environment:
@@ -29,13 +33,17 @@ services:
       - DB_DATABASE=teachers
       - DB_USERNAME=root
       - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+    user: root  # Важливо для правильних прав доступу
 
   students-service:
     build:
       context: ./students
       dockerfile: Dockerfile
     ports:
-      - "8003:8000"
+      - "8003:80"
     depends_on:
       - db-students
     environment:
@@ -44,13 +52,17 @@ services:
       - DB_DATABASE=students
       - DB_USERNAME=root
       - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+    user: root  # Важливо для правильних прав доступу
 
   registrations-service:
     build:
       context: ./registrations
       dockerfile: Dockerfile
     ports:
-      - "8004:8000"
+      - "8004:80"
     depends_on:
       - db-registrations
     environment:
@@ -59,13 +71,17 @@ services:
       - DB_DATABASE=registrations
       - DB_USERNAME=root
       - DB_PASSWORD=password
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+    user: root  # Важливо для правильних прав доступу
 
   grades-service:
     build:
       context: ./grades
       dockerfile: Dockerfile
     ports:
-      - "8005:8000"
+      - "8005:80"
     depends_on:
       - db-grades
     environment:
@@ -74,7 +90,17 @@ services:
       - DB_DATABASE=grades
       - DB_USERNAME=root
       - DB_PASSWORD=password
-
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - CACHE_DRIVER=redis
+    user: root  # Важливо для правильних прав доступу
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
   db-courses:
     image: mysql:8.0
     environment:
@@ -121,3 +147,4 @@ volumes:
   db-students-data:
   db-registrations-data:
   db-grades-data:
+  redis-data:

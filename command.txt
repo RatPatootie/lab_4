@@ -16,9 +16,19 @@ minikube image load lab_6-registrations-service
 minikube image load lab_6-students-service
 minikube image load lab_6-teachers-service
 
+------------------------------
+add migration 
+------------------------
+docker-compose exec courses-service php artisan migrate:fresh --seed
+docker-compose exec teachers-service php artisan migrate:fresh --seed
+docker-compose exec students-service php artisan migrate:fresh --seed
+docker-compose exec registrations-service php artisan migrate:fresh --seed
+docker-compose exec grades-service php artisan migrate:fresh --seed
+
+
 --------------------------------
 feed forward port
- kubectl port-forward service/courses-service 8000:8000  
+kubectl port-forward service/courses-service 80:80  
 
 -----------------------------------------
 enabel ingress
@@ -29,3 +39,14 @@ minikube addons enable ingress
 start ingress tunnel
 ---------------- 
 minikube tunnel
+
+--------------------
+make more pods
+----------------
+kubectl autoscale deployment <deployment-name> --min=1 --max=10 --cpu-percent=50
+
+
+------------------
+graphic interface
+------------------
+minikube dashboard

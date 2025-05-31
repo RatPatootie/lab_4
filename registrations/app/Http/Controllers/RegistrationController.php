@@ -6,24 +6,37 @@ use App\Models\Registration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 
 class RegistrationController extends Controller
 {
     public function index()
     {
-        $registrations = Registration::all();
+        // Cache all registrations for 60 minutes
+        $registrations = Cache::remember('all_registrations', 60 * 60, function () {
+            return Registration::all();
+        });
+        
         return response()->json($registrations);
     }
 
     public function getByStudent($studentId)
     {
-        $registrations = Registration::where('student_id', $studentId)->get();
+        // Cache registrations by student for 30 minutes
+        $registrations = Cache::remember('student_registrations_' . $studentId, 30 * 60, function () use ($studentId) {
+            return Registration::where('student_id', $studentId)->get();
+        });
+        
         return response()->json($registrations);
     }
 
     public function getByCourse($courseId)
     {
-        $registrations = Registration::where('course_id', $courseId)->get();
+        // Cache registrations by course for 30 minutes
+        $registrations = Cache::remember('course_registrations_' . $courseId, 30 * 60, function () use ($courseId) {
+            return Registration::where('course_id', $courseId)->get();
+        });
+        
         return response()->json($registrations);
     }
 
@@ -41,7 +54,7 @@ class RegistrationController extends Controller
         }
 
         // Check if student exists
-        $studentResponse = Http::get('http://localhost:8003/api/students/' . $request->student_id);
+        $studentResponse = Http::get('http://students-service/api/students/' . $request->student_id);
         if ($studentResponse->status() === 404) {
             return response()->json([
                 'error' => 'Student not found'
@@ -49,7 +62,7 @@ class RegistrationController extends Controller
         }
 
         // Check if course exists
-        $courseResponse = Http::get('http://localhost:8001/api/courses/' . $request->course_id);
+        $courseResponse = Http::get('http://courses-service/api/courses/' . $request->course_id);
         if ($courseResponse->status() === 404) {
             return response()->json([
                 'error' => 'Course not found'
@@ -74,6 +87,11 @@ class RegistrationController extends Controller
             'registration_date' => now(),
         ]);
 
+        // Clear relevant caches
+        Cache::forget('all_registrations');
+        Cache::forget('student_registrations_' . $request->student_id);
+        Cache::forget('course_registrations_' . $request->course_id);
+
         return response()->json($registration, 201);
     }
 
@@ -87,7 +105,17 @@ class RegistrationController extends Controller
             ], 404);
         }
         
+        // Store values before deletion for cache clearing
+        $studentId = $registration->student_id;
+        $courseId = $registration->course_id;
+        
         $registration->delete();
+        
+        // Clear relevant caches
+        Cache::forget('all_registrations');
+        Cache::forget('student_registrations_' . $studentId);
+        Cache::forget('course_registrations_' . $courseId);
+        
         return response()->json([
             'message' => 'Registration deleted successfully'
         ]);
