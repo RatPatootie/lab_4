@@ -1,0 +1,107 @@
+# 1. Deployment Laravel students-service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: students-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: students
+  template:
+    metadata:
+      labels:
+        app: students
+    spec:
+      containers:
+        - name: students
+          image: lab_6-students-service   # заміни на свій образ
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_HOST
+              value: db-students
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: students
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: password
+
+---
+# 2. Service Laravel students-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: students-service
+spec:
+  selector:
+    app: students
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# 3. Deployment MySQL db-students
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-students
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-students
+  template:
+    metadata:
+      labels:
+        app: db-students
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_DATABASE
+              value: students
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: db-students-pvc
+
+---
+# 4. Service MySQL db-students
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-students
+spec:
+  selector:
+    app: db-students
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+---
+# 5. PVC MySQL db-students-pvc
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-students-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

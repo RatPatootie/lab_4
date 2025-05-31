@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: grades-migrate-fresh-seed
+spec:
+  template:
+    spec:
+      containers:
+        - name: migrate
+          image: lab_6-grades-service   # твій образ Laravel-сервісу
+          imagePullPolicy: IfNotPresent
+
+          command: ["php", "artisan", "migrate:fresh", "--seed", "--force"]
+          env:
+            - name: DB_HOST
+              value: db-grades
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: grades
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: password
+      restartPolicy: Never
+  backoffLimit: 4

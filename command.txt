@@ -1,0 +1,31 @@
+-----------------------
+add yaml file 
+---------------------
+kubectl apply -f courses-migrate-fresh-seed.yaml
+kubectl apply -f teachers-migrate-fresh-seed.yaml
+kubectl apply -f students-migrate-fresh-seed.yaml
+kubectl apply -f registrations-migrate-fresh-seed.yaml
+kubectl apply -f grades-migrate-fresh-seed.yaml
+
+-----------------------
+Load Images
+-------------------------
+minikube image load lab_6-courses-service
+minikube image load lab_6-grades-service
+minikube image load lab_6-registrations-service
+minikube image load lab_6-students-service
+minikube image load lab_6-teachers-service
+
+--------------------------------
+feed forward port
+ kubectl port-forward service/courses-service 8000:8000  
+
+-----------------------------------------
+enabel ingress
+-----
+minikube addons enable ingress
+
+-------------------
+start ingress tunnel
+---------------- 
+minikube tunnel

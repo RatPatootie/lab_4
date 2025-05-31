@@ -1,0 +1,107 @@
+# 1. Deployment Laravel teachers-service
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teachers-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: teachers
+  template:
+    metadata:
+      labels:
+        app: teachers
+    spec:
+      containers:
+        - name: teachers
+          image: lab_6-teachers-service   # заміни на свій образ
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_HOST
+              value: db-teachers
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: teachers
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: password
+
+---
+# 2. Service Laravel teachers-service
+apiVersion: v1
+kind: Service
+metadata:
+  name: teachers-service
+spec:
+  selector:
+    app: teachers
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# 3. Deployment MySQL db-teachers
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-teachers
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-teachers
+  template:
+    metadata:
+      labels:
+        app: db-teachers
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_DATABASE
+              value: teachers
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: db-teachers-pvc
+
+---
+# 4. Service MySQL db-teachers
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-teachers
+spec:
+  selector:
+    app: db-teachers
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+---
+# 5. PVC MySQL db-teachers-pvc
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-teachers-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

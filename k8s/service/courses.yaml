@@ -1,0 +1,107 @@
+# 1. Deployment Laravel
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: courses-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: courses
+  template:
+    metadata:
+      labels:
+        app: courses
+    spec:
+      containers:
+        - name: courses
+          image: lab_6-courses-service
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: DB_HOST
+              value: db-courses
+            - name: DB_PORT
+              value: "3306"
+            - name: DB_DATABASE
+              value: courses
+            - name: DB_USERNAME
+              value: root
+            - name: DB_PASSWORD
+              value: password
+
+---
+# 2. Service Laravel
+apiVersion: v1
+kind: Service
+metadata:
+  name: courses-service
+spec:
+  selector:
+    app: courses
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000
+  type: ClusterIP
+
+---
+# 3. Deployment MySQL
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-courses
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-courses
+  template:
+    metadata:
+      labels:
+        app: db-courses
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          env:
+            - name: MYSQL_DATABASE
+              value: courses
+            - name: MYSQL_ROOT_PASSWORD
+              value: password
+          volumeMounts:
+            - name: mysql-storage
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-storage
+          persistentVolumeClaim:
+            claimName: db-courses-pvc
+
+---
+# 4. Service MySQL
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-courses
+spec:
+  selector:
+    app: db-courses
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
+
+---
+# 5. PVC MySQL
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-courses-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: laravel-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - host: localhost
+      http:
+        paths:
+          - path: /courses(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: courses-service
+                port:
+                  number: 8000
+          - path: /teachers(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: teachers-service
+                port:
+                  number: 8000
+          - path: /students(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: students-service
+                port:
+                  number: 8000
+          - path: /registrations(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: registrations-service
+                port:
+                  number: 8000
+          - path: /grades(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: grades-service
+                port:
+                  number: 8000
